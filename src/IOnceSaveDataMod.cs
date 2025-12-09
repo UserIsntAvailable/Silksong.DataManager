@@ -15,6 +15,8 @@ public interface IOnceSaveDataMod<T> : IOnceSaveDataMod
     /// title screen, this property is set to null.
     T? OnceSaveData { get; set; }
 
+    bool IsOptional => false;
+
     System.Type IOnceSaveDataMod.OnceSaveDataType => typeof(T);
 
     object? IOnceSaveDataMod.UntypedOnceSaveData
@@ -33,4 +35,6 @@ public interface IOnceSaveDataMod
 
     /// The object (of type <see cref="OnceSaveDataType"/>) to be serialized.
     object? UntypedOnceSaveData { get; set; }
+
+    bool UntypedIsOptional { get; }
 }

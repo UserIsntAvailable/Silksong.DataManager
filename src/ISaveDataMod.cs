@@ -8,6 +8,8 @@ public interface ISaveDataMod<T> : ISaveDataMod
     /// title screen, this property is set to null.
     T? SaveData { get; set; }
 
+    bool IsOptional => false;
+
     System.Type ISaveDataMod.SaveDataType => typeof(T);
 
     object? ISaveDataMod.UntypedSaveData
@@ -15,6 +17,8 @@ public interface ISaveDataMod<T> : ISaveDataMod
         get => SaveData;
         set => SaveData = value == null ? null : (T)value;
     }
+
+    bool ISaveDataMod.UntypedIsOptional => IsOptional;
 }
 
 /// An implementation detail that must be made public due to accessibility rules.
@@ -26,4 +30,6 @@ public interface ISaveDataMod
 
     /// The object (of type <see cref="SaveDataType"/>) to be serialized.
     object? UntypedSaveData { get; set; }
+
+    bool UntypedIsOptional { get; }
 }

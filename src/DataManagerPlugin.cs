@@ -11,9 +11,11 @@ namespace Silksong.DataManager;
 [Bep.BepInAutoPlugin(id: "org.silksong-modding.datamanager")]
 [Bep.BepInDependency("org.silksong-modding.i18n")]
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-public partial class DataManagerPlugin : Bep.BaseUnityPlugin
+public partial class DataManagerPlugin : Bep.BaseUnityPlugin, ISaveDataMod<DataManagerSaveData>
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 {
+    private ManagedMod _managedInstance = null!;
+
     // These properties will never be accessed before Start executes.
     internal static DataManagerPlugin Instance { get; private set; } = null!;
     internal static Bep.Logging.ManualLogSource InstanceLogger => Instance.Logger;
@@ -32,11 +34,15 @@ public partial class DataManagerPlugin : Bep.BaseUnityPlugin
     // any mod instances when Awake runs.
     private void Start()
     {
+        _ = ManagedMod.TryCreate(this, out var managedMod);
+        _managedInstance = managedMod!;
+
         foreach (var (guid, info) in Bep.Bootstrap.Chainloader.PluginInfos)
         {
             if (
                 info?.Instance is not { } plugin
-                || !ManagedMod.TryCreate(plugin, out var managedMod)
+                || guid == Id
+                || !ManagedMod.TryCreate(plugin, out managedMod)
             )
                 continue;
 
@@ -44,6 +50,8 @@ public partial class DataManagerPlugin : Bep.BaseUnityPlugin
             managedMod.LoadGlobalData();
             ManagedMods.Add(managedMod);
         }
+
+        ManagedMods.Add(_managedInstance);
     }
 
     internal static void ClearModdedSaveData(int saveSlot)
@@ -87,8 +95,13 @@ public partial class DataManagerPlugin : Bep.BaseUnityPlugin
     {
         var syncedFilenameSuffix = ".json.dat";
         var saveDir = DataPaths.SaveDataDir(saveSlot);
+
         try
         {
+            _managedInstance.LoadSaveData(saveSlot);
+            var optionalMods = SaveData is null ? [] : SaveData.OptionalMods;
+            SaveData = null;
+
             // The ?* instead of just * is to work around a quirk of EnumerateFiles;
             // see https://learn.microsoft.com/en-us/dotnet/api/system.io.directory.enumeratefiles?view=netstandard-2.1#system-io-directory-enumeratefiles(system-string-system-string)
             return IO
@@ -102,7 +115,11 @@ public partial class DataManagerPlugin : Bep.BaseUnityPlugin
                     var name = IO.Path.GetFileName(path);
                     return name.Substring(0, name.Length - syncedFilenameSuffix.Length);
                 })
-                .Where(modGUID => !Bep.Bootstrap.Chainloader.PluginInfos.ContainsKey(modGUID))
+                .Where(modGUID =>
+                {
+                    return !Bep.Bootstrap.Chainloader.PluginInfos.ContainsKey(modGUID)
+                        && !optionalMods.Contains(modGUID);
+                })
                 .ToList();
         }
         catch (IO.DirectoryNotFoundException)
@@ -110,4 +127,14 @@ public partial class DataManagerPlugin : Bep.BaseUnityPlugin
             return [];
         }
     }
+
+    /// DataManager's implementation of <see cref="ISaveDataMod{T}"/>.
+    public DataManagerSaveData? SaveData { get; set; }
+}
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+public record DataManagerSaveData
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+{
+    public CG.HashSet<string> OptionalMods { get; set; } = [];
 }

@@ -54,6 +54,8 @@ internal static class SaveDataLoadHook
             mod.LoadSaveData(saveSlot);
             mod.LoadOnceSaveData(saveSlot);
         }
+
+        DataManagerPlugin.Instance.SaveData ??= new();
     }
 }
 
@@ -86,6 +88,20 @@ internal static class SaveDataSaveHook
             foreach (var mod in DataManagerPlugin.Instance.ManagedMods)
             {
                 mod.SaveSaveData(saveSlot);
+
+                if (mod.SaveData is { } saveData)
+                {
+                    var optionalMods = DataManagerPlugin.Instance.SaveData?.OptionalMods;
+
+                    if (saveData.UntypedIsOptional)
+                    {
+                        optionalMods?.Add(mod.Guid);
+                    }
+                    else
+                    {
+                        optionalMods?.Remove(mod.Guid);
+                    }
+                }
             }
 
             // TODO(UserIsntAvailable): Handle "Restore_Points"
