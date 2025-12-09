@@ -9,6 +9,8 @@ public interface ISaveDataMod<T> : ISaveDataMod
     /// title screen, this property is set to null.
     T? SaveData { get; set; }
 
+    bool IsRequired => true;
+
     System.Type ISaveDataMod.SaveDataType => typeof(T);
 
     object? ISaveDataMod.UntypedSaveData
