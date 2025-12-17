@@ -13,10 +13,10 @@ internal static class OnQuitGameHook
         IO.Directory.CreateDirectory(DataPaths.ProfileDataDir);
         IO.Directory.CreateDirectory(DataPaths.GlobalDataDir);
 
-        foreach (var modSettings in DataManagerPlugin.Instance.ManagedMods)
+        foreach (var mod in DataManagerPlugin.Instance.ManagedMods)
         {
-            modSettings.SaveProfileData();
-            modSettings.SaveGlobalData();
+            mod.SaveProfileData();
+            mod.SaveGlobalData();
         }
     }
 }
@@ -83,9 +83,9 @@ internal static class SaveDataSaveHook
 
             IO.Directory.CreateDirectory(DataPaths.SaveDataDir(saveSlot));
 
-            foreach (var modSettings in DataManagerPlugin.Instance.ManagedMods)
+            foreach (var mod in DataManagerPlugin.Instance.ManagedMods)
             {
-                modSettings.SaveSaveData(saveSlot);
+                mod.SaveSaveData(saveSlot);
             }
 
             // TODO(UserIsntAvailable): Handle "Restore_Points"
